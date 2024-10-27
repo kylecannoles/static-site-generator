@@ -17,11 +17,11 @@ class TestTextNode(unittest.TestCase):
         node = TextNode("This is a text node", TextType.BOLD, "https://google.com")
         self.assertEqual("TextNode(This is a text node, bold, https://google.com)", str(node))
     def test_invalid_text_type(self):
-        node = TextNode("This is an invalid text node", TextType.NORMAL)
+        node = TextNode("This is an invalid text node", TextType.TEXT)
         node.text_type = "invalid"
         self.assertRaises(Exception, TextNode.text_node_to_html_node, node)
     def test_textnode_to_html_text(self):
-        node = TextNode("This is a normal text html node", TextType.NORMAL)
+        node = TextNode("This is a normal text html node", TextType.TEXT)
         self.assertEqual(TextNode.text_node_to_html_node(node).to_html(),"This is a normal text html node")
     def test_textnode_to_html_bold(self):
         node = TextNode("This is a bold html node", TextType.BOLD)
