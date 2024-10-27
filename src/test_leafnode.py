@@ -12,6 +12,9 @@ class TestLeafNode(unittest.TestCase):
     def test_empty_value(self):
         node = LeafNode("b", None)
         self.assertRaises(ValueError, node.to_html)
+    def test_empty_tag(self):
+        node = LeafNode(None, "Normal text")
+        self.assertEqual(node.to_html(), "Normal text")
 
 if __name__ == "__main__":
     unittest.main()
