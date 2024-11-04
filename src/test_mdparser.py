@@ -26,7 +26,8 @@ class TestMDParser(unittest.TestCase):
         self.assertEqual(new_nodes, [TextNode("This is text with a ", TextType.TEXT), TextNode("code block", TextType.CODE),])
     def test_missing_delimiter(self):
         node = TextNode("This is text with a code block word", TextType.TEXT)
-        self.assertRaises(Exception, split_nodes_delimiter, [node], "`", TextType.CODE)
+        new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+        self.assertEqual(new_nodes, [TextNode("This is text with a code block word", TextType.TEXT),])
     def test_missing_two_delimiters(self):
         node = TextNode("This is text with a code block` word", TextType.TEXT)
         self.assertRaises(Exception, split_nodes_delimiter, [node], "`", TextType.CODE)
