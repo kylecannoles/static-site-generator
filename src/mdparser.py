@@ -50,3 +50,50 @@ def extract_markdown_links(text):
     image_list = []
     matches = re.findall(r"(?:[^!]|^)\[([^\[\]]*?)\]\(([^\(\)]*?)\)", text)
     return matches
+
+def split_nodes_image(old_nodes):
+    new_nodes = []
+    for node in old_nodes:
+        images = extract_markdown_images(node.text)
+        # if no images
+        if images == []:
+            return old_nodes
+        text_to_parse = node.text
+        # add first image node if text starts with image
+        image_alt, image_link = images[0]
+        if text_to_parse.startswith(f"![{image_alt}]({image_link})"):
+            new_nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
+
+        for image_alt, image_link in images:
+            sections = text_to_parse.split(f"![{image_alt}]({image_link})", 1)
+            if sections[0] != "":
+                new_nodes.append(TextNode(sections[0], TextType.TEXT))
+                new_nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
+            if len(sections) > 1:
+                text_to_parse = sections[1]
+        if text_to_parse != "":# if last image parsed, add remaining text as a text node
+                new_nodes.append(TextNode(text_to_parse, TextType.TEXT))
+    return new_nodes
+def split_nodes_link(old_nodes):
+    new_nodes = []
+    for node in old_nodes:
+        links = extract_markdown_links(node.text)
+        # if no links
+        if links == []:
+            return old_nodes
+        text_to_parse = node.text
+        # add first link node if text starts with link
+        link_text, link_url = links[0]
+        if text_to_parse.startswith(f"[{link_text}]({link_url})"):
+            new_nodes.append(TextNode(link_text, TextType.LINK, link_url))
+
+        for link_text, link_url in links:
+            sections = text_to_parse.split(f"[{link_text}]({link_url})", 1)
+            if sections[0] != "":
+                new_nodes.append(TextNode(sections[0], TextType.TEXT))
+                new_nodes.append(TextNode(link_text, TextType.LINK, link_url))
+            if len(sections) > 1:
+                text_to_parse = sections[1]
+        if text_to_parse != "":# if last image parsed, add remaining text as a text node
+                new_nodes.append(TextNode(text_to_parse, TextType.TEXT))
+    return new_nodes
