@@ -87,3 +87,12 @@ def split_nodes_link(old_nodes):
         if text_to_parse != "":# if last image parsed, add remaining text as a text node
                 new_nodes.extend([TextNode(text_to_parse, TextType.TEXT)])
     return new_nodes
+
+def text_to_textnodes(text):
+    node_list = [TextNode(text, TextType.TEXT)]
+    node_list = split_nodes_delimiter(node_list, "**", TextType.BOLD)
+    node_list = split_nodes_delimiter(node_list, "*", TextType.ITALIC)
+    node_list = split_nodes_delimiter(node_list, "`", TextType.CODE)
+    node_list = split_nodes_image(node_list)
+    node_list = split_nodes_link(node_list)
+    return node_list

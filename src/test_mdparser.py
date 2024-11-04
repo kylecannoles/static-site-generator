@@ -1,7 +1,7 @@
 import unittest
 
 from textnode import TextNode, TextType
-from mdparser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link
+from mdparser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes
 
 class TestMDParser(unittest.TestCase):
     def test_split_delimiter(self):
@@ -142,3 +142,63 @@ class TestMDParser(unittest.TestCase):
             TextNode("to youtube", TextType.LINK, "https://www.youtube.com/@bootdotdev"),
             ], new_nodes)
 
+    def test_text_to_textnodes(self):
+        text = "This is **text** with an *italic* word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+        new_nodes = text_to_textnodes(text)
+        self.assertEqual([
+            TextNode("This is ", TextType.TEXT),
+            TextNode("text", TextType.BOLD),
+            TextNode(" with an ", TextType.TEXT),
+            TextNode("italic", TextType.ITALIC),
+            TextNode(" word and a ", TextType.TEXT),
+            TextNode("code block", TextType.CODE),
+            TextNode(" and an ", TextType.TEXT),
+            TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
+            TextNode(" and a ", TextType.TEXT),
+            TextNode("link", TextType.LINK, "https://boot.dev"),
+        ], new_nodes)
+    def test_text_to_textnodes_reversed(self):
+        text = "[link](https://boot.dev) and a ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and an `code block` word and a *italic* with an **text**This is "
+        new_nodes = text_to_textnodes(text)
+        self.assertEqual([
+            TextNode("link", TextType.LINK, "https://boot.dev"),
+            TextNode(" and a ", TextType.TEXT),
+            TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
+            TextNode(" and an ", TextType.TEXT),
+            TextNode("code block", TextType.CODE),
+            TextNode(" word and a ", TextType.TEXT),
+            TextNode("italic", TextType.ITALIC),
+            TextNode(" with an ", TextType.TEXT),
+            TextNode("text", TextType.BOLD),
+            TextNode("This is ", TextType.TEXT),
+        ], new_nodes)
+    def test_text_to_textnodes_text_only(self):
+        text = "This is basic text" 
+        new_nodes = text_to_textnodes(text)
+        self.assertEqual([
+            TextNode("This is basic text", TextType.TEXT),
+        ], new_nodes)
+    def test_text_to_textnodes_bold_only(self):
+        text = "**This is bold text**" 
+        new_nodes = text_to_textnodes(text)
+        self.assertEqual([
+            TextNode("This is bold text", TextType.BOLD),
+        ], new_nodes)
+    def test_text_to_textnodes_italic_only(self):
+        text = "*This is italic text*" 
+        new_nodes = text_to_textnodes(text)
+        self.assertEqual([
+            TextNode("This is italic text", TextType.ITALIC),
+        ], new_nodes)
+    def test_text_to_textnodes_image_only(self):
+        text = "![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg)" 
+        new_nodes = text_to_textnodes(text)
+        self.assertEqual([
+            TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
+        ], new_nodes)
+    def test_text_to_textnodes_link_only(self):
+        text = "[link](https://boot.dev)" 
+        new_nodes = text_to_textnodes(text)
+        self.assertEqual([
+            TextNode("link", TextType.LINK, "https://boot.dev"),
+        ], new_nodes)
