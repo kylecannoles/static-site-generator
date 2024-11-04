@@ -96,3 +96,10 @@ def text_to_textnodes(text):
     node_list = split_nodes_image(node_list)
     node_list = split_nodes_link(node_list)
     return node_list
+
+def markdown_to_blocks(markdown):
+    sections = re.split(r'\n[\t\f\v\r ]*\n', markdown)
+    #sections = markdown.split("\n\n")
+    sections = list(map(str.strip, sections))
+    sections = [s for s in sections if s != ""]
+    return sections

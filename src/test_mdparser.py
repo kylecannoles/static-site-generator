@@ -1,7 +1,7 @@
 import unittest
 
 from textnode import TextNode, TextType
-from mdparser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes
+from mdparser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks
 
 class TestMDParser(unittest.TestCase):
     def test_split_delimiter(self):
@@ -202,3 +202,15 @@ class TestMDParser(unittest.TestCase):
         self.assertEqual([
             TextNode("link", TextType.LINK, "https://boot.dev"),
         ], new_nodes)
+
+    def test_markdown_to_blocks(self):
+        markdown = """# This is a heading
+     
+This is a paragraph of text. It has some **bold** and *italic* words inside of it.
+    
+* This is the first list item in a list block
+* This is a list item
+* This is another list item"""
+        self.assertEqual(["# This is a heading", "This is a paragraph of text. It has some **bold** and *italic* words inside of it.", """* This is the first list item in a list block
+* This is a list item
+* This is another list item"""], markdown_to_blocks(markdown))
