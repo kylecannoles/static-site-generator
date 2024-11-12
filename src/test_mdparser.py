@@ -1,7 +1,7 @@
 import unittest
 
 from textnode import TextNode, TextType
-from mdparser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks
+from mdparser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks, BlockType, block_to_block_type
 
 class TestMDParser(unittest.TestCase):
     def test_split_delimiter(self):
@@ -214,3 +214,25 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
         self.assertEqual(["# This is a heading", "This is a paragraph of text. It has some **bold** and *italic* words inside of it.", """* This is the first list item in a list block
 * This is a list item
 * This is another list item"""], markdown_to_blocks(markdown))
+
+    def test_block_to_block_type_heading(self):
+        md_block = "# Big Heading"
+        self.assertEqual(BlockType.HEADING, block_to_block_type(md_block))
+    def test_block_to_block_type_code(self):
+        md_block = '```\nprint("What is the answer to the universe")\nprint(42)\n```'
+        self.assertEqual(BlockType.CODE, block_to_block_type(md_block))
+    def test_block_to_block_type_quote(self):
+        md_block = '> The best time to plant a tree was 20 years ago.\n> The second best time is now.'
+        self.assertEqual(BlockType.QUOTE, block_to_block_type(md_block))
+    def test_block_to_block_type_unordered_list(self):
+        md_block = '- Eggs\n- Milk\n- Flour'
+        self.assertEqual(BlockType.UNORDERED_LIST, block_to_block_type(md_block))
+    def test_block_to_block_type_unordered_list_2(self):
+        md_block = '* Eggs\n* Milk\n* Flour'
+        self.assertEqual(BlockType.UNORDERED_LIST, block_to_block_type(md_block))
+    def test_block_to_block_type_ordered_list(self):
+        md_block = '1. Eggs\n2. Milk\n3. Flour'
+        self.assertEqual(BlockType.ORDERED_LIST, block_to_block_type(md_block))
+    def test_block_to_block_type_paragraph(self):
+        md_block = 'The quick brown fox jumps over the lazy dog. My favorite food is chicken.'
+        self.assertEqual(BlockType.PARAGRAPH, block_to_block_type(md_block))

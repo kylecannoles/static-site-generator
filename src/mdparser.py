@@ -1,6 +1,15 @@
 import re
+from enum import Enum
 
 from textnode import TextNode, TextType
+
+class BlockType(Enum):
+    PARAGRAPH = "paragraph"
+    HEADING = "heading"
+    CODE = "code"
+    QUOTE = "quote"
+    UNORDERED_LIST = "unordered_list"
+    ORDERED_LIST = "ordered_list"
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []
@@ -103,3 +112,17 @@ def markdown_to_blocks(markdown):
     sections = list(map(str.strip, sections))
     sections = [s for s in sections if s != ""]
     return sections
+def block_to_block_type(markdown_block):
+    block_types = {
+        BlockType.HEADING : r'#{1,6} .+',
+        BlockType.CODE : r'^`{3}\n[\S\s]+\n`{3,}',
+        BlockType.QUOTE : r'>{1,}[\S\s]+>{1,}.+',
+        BlockType.UNORDERED_LIST : r'([-\*] .*)',
+        BlockType.ORDERED_LIST : r'([0-9]. .*)',
+    }
+    for typ, pattern in block_types.items():
+        if re.findall(pattern, markdown_block):
+            return typ
+    #lines = markdown_block.split("\n")
+    return BlockType.PARAGRAPH
+
