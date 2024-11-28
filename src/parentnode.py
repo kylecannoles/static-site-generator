@@ -3,6 +3,10 @@ from htmlnode import HTMLNode
 class ParentNode(HTMLNode):
     def __init__(self, tag, children, props=None):
         super().__init__(tag, None, children, props)     
+    def __eq__(self, node):
+        if not isinstance(node, ParentNode):
+            return NotImplemented
+        return self.tag == node.tag and self.children == node.children and self.props == node.props
     def to_html(self):
         if self.tag is None:
             raise ValueError("An html tag is required")
