@@ -2,6 +2,8 @@ import re
 from enum import Enum
 
 from textnode import TextNode, TextType
+from parentnode import ParentNode
+from leafnode import LeafNode
 
 class BlockType(Enum):
     PARAGRAPH = "paragraph"
@@ -125,4 +127,78 @@ def block_to_block_type(markdown_block):
             return typ
     #lines = markdown_block.split("\n")
     return BlockType.PARAGRAPH
+
+def markdown_to_html_node(markdown):
+    # parse markdown into blocks
+    md_blocks = markdown_to_blocks(markdown)
+    node_list = []
+    # parse blocks into html nodes
+    for block in md_blocks:
+        # determine type of block
+        block_type = block_to_block_type(block)
+        # create HTMLNode based on block type
+        block_html_node = None
+        match block_type:
+            case BlockType.HEADING:
+                block_html_node = parse_heading(block)
+            case BlockType.CODE:
+                block_html_node = parse_code(block)
+            case BlockType.QUOTE:
+                block_html_node = parse_quote(block)
+            case BlockType.UNORDERED_LIST:
+                block_html_node = parse_ul(block)
+            case BlockType.ORDERED_LIST:
+                block_html_node = parse_ol(block)
+            case BlockType.PARAGRAPH:
+                block_html_node = parse_paragraph(block)
+        node_list.append(block_html_node)
+
+    # add all html nodes as children under a <div> node
+    markdown_node = ParentNode("div", node_list)
+    return markdown_node
+
+def parse_heading(block):
+    # number of # symbols = header level
+    count = 0
+    inner_text = ""
+    pos = 0
+    for pos in range(len(block)):
+        if block[pos] == '#':
+            count += 1
+        else:
+            break
+    if block[pos] ==  ' ':
+        return LeafNode(f"h{count}", block[pos+1:])
+    return None
+def parse_code(block):
+    if block.startswith("```") and block.endswith("```"):
+        return LeafNode("code", block[3:-3].strip())
+def parse_quote(block):
+    final_quote = ""
+    split_block = block.split("\n")
+    for line in split_block:
+        if line.startswith("> "):
+            final_quote += line[2:] + "\n"
+    return LeafNode("blockquote", final_quote[:-1])
+def parse_ul(block):
+    children = []
+    split_block = block.split("\n")
+    for line in split_block:
+        if line.startswith("-") or line.startswith("*"):
+            children.append(LeafNode("li", line[2:]))
+    return ParentNode("ul", children) 
+def parse_ol(block):
+    children = []
+    split_block = block.split("\n")
+    start_pos = split_block[0].find(".")
+    start = split_block[0][:start_pos]
+    text = split_block[0][start_pos+1:].lstrip()
+    children.append(LeafNode("li", text))
+    for line in split_block[1:]:
+        line_pos = line.find(".")
+        text = line[line_pos+1:].lstrip()
+        children.append(LeafNode("li", text))
+    return ParentNode("ol", children, props={"start": start})
+def parse_paragraph(block):
+    return LeafNode("p", block)
 

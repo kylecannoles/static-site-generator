@@ -1,7 +1,9 @@
 import unittest
 
+from parentnode import ParentNode
+from leafnode import LeafNode
 from textnode import TextNode, TextType
-from mdparser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks, BlockType, block_to_block_type
+from mdparser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks, BlockType, block_to_block_type, parse_heading, parse_code, parse_quote, parse_ul, parse_ol, markdown_to_html_node
 
 class TestMDParser(unittest.TestCase):
     def test_split_delimiter(self):
@@ -236,3 +238,66 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
     def test_block_to_block_type_paragraph(self):
         md_block = 'The quick brown fox jumps over the lazy dog. My favorite food is chicken.'
         self.assertEqual(BlockType.PARAGRAPH, block_to_block_type(md_block))
+
+    def test_parse_heading(self):
+        md_block = "# Big Heading"
+        self.assertEqual(LeafNode("h1", "Big Heading"), parse_heading(md_block))
+    def test_parse_heading(self):
+        md_block = "###### Small Heading"
+        self.assertEqual(LeafNode("h6", "Small Heading"), parse_heading(md_block))
+    def test_parse_code(self):
+        md_block = "```print()```"
+        node = LeafNode("code", "print()")
+        cmp_node = parse_code(md_block)
+        self.assertEqual(node, cmp_node)
+    def test_parse_quote(self):
+        md_block = '> The best time to plant a tree was 20 years ago.\n> The second best time is now.'
+        node = LeafNode("blockquote", "The best time to plant a tree was 20 years ago.\nThe second best time is now.")
+        self.assertEqual(node, parse_quote(md_block))
+    def test_parse_ul(self):
+        md_block = '- Eggs\n- Milk\n- Flour'
+        children = [LeafNode("li", "Eggs"), LeafNode("li", "Milk"), LeafNode("li", "Flour")]
+        node = ParentNode("ul", children) 
+        self.assertEqual(node, parse_ul(md_block))
+    def test_parse_ol(self):
+        md_block = '2. Eggs\n3. Milk\n4. Flour'
+        children = [LeafNode("li", "Eggs"), LeafNode("li", "Milk"), LeafNode("li", "Flour")]
+        node = ParentNode("ol", children, props={"start":"2"}) 
+        self.assertEqual(node, parse_ol(md_block))
+    def test_parse_md_to_html_nodes(self):
+        markdown = "# Big Heading"
+        markdown += '\n\n'
+        markdown += '```\nprint("What is the answer to the universe")\nprint(42)\n```'
+        markdown += '\n\n'
+        markdown += '> The best time to plant a tree was 20 years ago.\n> The second best time is now.'
+        markdown += '\n\n'
+        markdown += '- Eggs\n- Milk\n- Flour'
+        markdown += '\n\n'
+        markdown += '* Eggs\n* Milk\n* Flour'
+        markdown += '\n\n'
+        markdown += '1. Eggs\n2. Milk\n3. Flour'
+        markdown += '\n\n'
+        markdown += 'The quick brown fox jumps over the lazy dog. My favorite food is chicken.'
+        node = ParentNode("div", [
+            LeafNode("h1", "Big Heading"),
+            LeafNode("code", 'print("What is the answer to the universe")\nprint(42)'),
+            LeafNode("blockquote", 'The best time to plant a tree was 20 years ago.\nThe second best time is now.'),
+            ParentNode("ul", [
+                LeafNode("li", "Eggs"),
+                LeafNode("li", "Milk"),
+                LeafNode("li", "Flour"),
+            ]),
+            ParentNode("ul", [
+                LeafNode("li", "Eggs"),
+                LeafNode("li", "Milk"),
+                LeafNode("li", "Flour"),
+            ]),
+            ParentNode("ol", [
+                LeafNode("li", "Eggs"),
+                LeafNode("li", "Milk"),
+                LeafNode("li", "Flour"),
+                ], props={"start": "1"}
+            ),
+            LeafNode("p", "The quick brown fox jumps over the lazy dog. My favorite food is chicken."),
+        ])
+        self.assertEqual(node, markdown_to_html_node(markdown))
