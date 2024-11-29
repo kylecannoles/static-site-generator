@@ -110,7 +110,6 @@ def text_to_textnodes(text):
 
 def markdown_to_blocks(markdown):
     sections = re.split(r'\n[\t\f\v\r ]*\n', markdown)
-    #sections = markdown.split("\n\n")
     sections = list(map(str.strip, sections))
     sections = [s for s in sections if s != ""]
     return sections
@@ -118,14 +117,13 @@ def block_to_block_type(markdown_block):
     block_types = {
         BlockType.HEADING : r'#{1,6} .+',
         BlockType.CODE : r'^`{3}\n[\S\s]+\n`{3,}',
-        BlockType.QUOTE : r'>{1,}[\S\s]+>{1,}.+',
+        BlockType.QUOTE : r'>{1,}[\s]+.+',
         BlockType.UNORDERED_LIST : r'([-\*] .*)',
         BlockType.ORDERED_LIST : r'([0-9]. .*)',
     }
     for typ, pattern in block_types.items():
         if re.findall(pattern, markdown_block):
             return typ
-    #lines = markdown_block.split("\n")
     return BlockType.PARAGRAPH
 
 def markdown_to_html_node(markdown):
@@ -168,7 +166,12 @@ def parse_heading(block):
         else:
             break
     if block[pos] ==  ' ':
-        return LeafNode(f"h{count}", block[pos+1:])
+        node_list = text_to_textnodes(block[pos+1:])
+        if len(node_list) > 1:
+            html_nodes = text_node_list_to_html_node_list(node_list)
+            return ParentNode(f"h{count}", html_nodes)
+        else:
+            return LeafNode(f"h{count}", block[pos+1:])
     return None
 def parse_code(block):
     if block.startswith("```") and block.endswith("```"):
@@ -185,7 +188,12 @@ def parse_ul(block):
     split_block = block.split("\n")
     for line in split_block:
         if line.startswith("-") or line.startswith("*"):
-            children.append(LeafNode("li", line[2:]))
+            node_list = text_to_textnodes(line[2:])
+            if len(node_list) > 1:
+                html_nodes = text_node_list_to_html_node_list(node_list)
+                children.append(ParentNode("li", html_nodes))
+            else:
+                children.append(LeafNode("li", line[2:]))
     return ParentNode("ul", children) 
 def parse_ol(block):
     children = []
@@ -197,8 +205,29 @@ def parse_ol(block):
     for line in split_block[1:]:
         line_pos = line.find(".")
         text = line[line_pos+1:].lstrip()
-        children.append(LeafNode("li", text))
+        node_list = text_to_textnodes(text)
+        if len(node_list) > 1:
+            html_nodes = text_node_list_to_html_node_list(node_list)
+            children.append(ParentNode("li", html_nodes))
+        else:
+            children.append(LeafNode("li", text))
     return ParentNode("ol", children, props={"start": start})
 def parse_paragraph(block):
+    node_list = text_to_textnodes(block)
+    if len(node_list) > 1:
+        html_nodes = text_node_list_to_html_node_list(node_list)
+        return ParentNode("p", html_nodes)
     return LeafNode("p", block)
+def text_node_list_to_html_node_list(textnode_list):
+    html_node_list = []
+    for node in textnode_list:
+        html_node_list.append(TextNode.text_node_to_html_node(node))
+    return html_node_list
 
+def extract_title(markdown):
+    title = markdown.lstrip()
+    title_end_pos = title.find("\n")
+    title = title[:title_end_pos]
+    if title.startswith("# "):
+        return title[2:].lstrip()
+    raise ValueError("Markdown must contain a title (heading 1) as the first block")

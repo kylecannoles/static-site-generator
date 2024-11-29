@@ -3,7 +3,7 @@ import unittest
 from parentnode import ParentNode
 from leafnode import LeafNode
 from textnode import TextNode, TextType
-from mdparser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks, BlockType, block_to_block_type, parse_heading, parse_code, parse_quote, parse_ul, parse_ol, markdown_to_html_node
+from mdparser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks, BlockType, block_to_block_type, parse_heading, parse_code, parse_quote, parse_ul, parse_ol, markdown_to_html_node, extract_title
 
 class TestMDParser(unittest.TestCase):
     def test_split_delimiter(self):
@@ -301,3 +301,10 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
             LeafNode("p", "The quick brown fox jumps over the lazy dog. My favorite food is chicken."),
         ])
         self.assertEqual(node, markdown_to_html_node(markdown))
+
+    def test_extract_title(self):
+        markdown = " #  Hello "
+        self.assertEqual("Hello",extract_title(markdown)) 
+    def test_extract_title_empty(self):
+        markdown = "## Welcome to my Ted Talk."
+        self.assertRaises(Exception, extract_title, markdown)

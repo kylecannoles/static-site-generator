@@ -1,9 +1,12 @@
-from os import mkdir, path, listdir
+from os import mkdir, makedirs, path, listdir
 from shutil import rmtree, copy
+
 from textnode import TextNode, TextType
+from mdparser import markdown_to_html_node, extract_title
 
 def main():
     copy_static_to_public()
+    generate_page()
 
 def copy_files(src,dest, file_list):
     for file in file_list:
@@ -23,5 +26,27 @@ def copy_static_to_public(src="static", dest="public"):
     mkdir("public")
     file_list = listdir(src)
     copy_files(src,dest, file_list)
+
+def generate_page(from_path="content/index.md", template_path="template.html", dest_path="public/index.html"):
+    print(f"Generating page from '{from_path}' to '{dest_path}' using '{template_path}'")
+    # Read md file from dest_path
+    f = open(from_path, "r")
+    md_file = f.read()
+    # Read template file from template_path
+    f = open(template_path, "r")
+    template_file = f.read()
+    # Convert markdown to html_node 
+    html_node = markdown_to_html_node(md_file)
+    print(html_node)
+    # Get page title
+    page_title = extract_title(md_file)
+    # Replace template variables
+    html_file = template_file.replace("{{ Title }}", page_title).replace("{{ Content }}", html_node.to_html())
+    # Make directories if needed
+    d_path, f_name = path.split(dest_path)
+    makedirs(d_path, exist_ok=True)
+    # Write to file
+    f = open(dest_path, "w")
+    f.write(html_file)
 
 main()
