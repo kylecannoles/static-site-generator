@@ -31,12 +31,12 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
             else:
                 # try string.split
                 split_text = node.text.split(delimiter)
-                if split_text[0] != "":
-                    new_nodes.append(TextNode(split_text[0], TextType.TEXT))
-                if split_text[1] != "":
-                    new_nodes.append(TextNode(split_text[1], text_type))
-                if split_text[2] != "":
-                    new_nodes.append(TextNode(split_text[2], TextType.TEXT))
+                for i in range(len(split_text)):
+                    if split_text[i]:
+                        if i % 2 == 1:
+                            new_nodes.append(TextNode(split_text[i], text_type))
+                        else:
+                            new_nodes.append(TextNode(split_text[i], TextType.TEXT))
         else:
             new_nodes.extend([node])
     return new_nodes
@@ -95,7 +95,7 @@ def split_nodes_link(old_nodes):
                 new_nodes.extend([TextNode(link_text, TextType.LINK, link_url)])
             if len(sections) > 1:
                 text_to_parse = sections[1]
-        if text_to_parse != "":# if last image parsed, add remaining text as a text node
+        if text_to_parse != "":# if last link parsed, add remaining text as a text node
                 new_nodes.extend([TextNode(text_to_parse, TextType.TEXT)])
     return new_nodes
 
@@ -118,7 +118,7 @@ def block_to_block_type(markdown_block):
         BlockType.HEADING : r'#{1,6} .+',
         BlockType.CODE : r'^`{3}\n[\S\s]+\n`{3,}',
         BlockType.QUOTE : r'>{1,}[\s]+.+',
-        BlockType.UNORDERED_LIST : r'([-\*] .*)',
+        BlockType.UNORDERED_LIST : r'(^[-\*] .*)',
         BlockType.ORDERED_LIST : r'([0-9]. .*)',
     }
     for typ, pattern in block_types.items():
@@ -153,6 +153,7 @@ def markdown_to_html_node(markdown):
 
     # add all html nodes as children under a <div> node
     markdown_node = ParentNode("div", node_list)
+    #print(markdown_node)
     return markdown_node
 
 def parse_heading(block):
@@ -167,11 +168,14 @@ def parse_heading(block):
             break
     if block[pos] ==  ' ':
         node_list = text_to_textnodes(block[pos+1:])
-        if len(node_list) > 1:
-            html_nodes = text_node_list_to_html_node_list(node_list)
-            return ParentNode(f"h{count}", html_nodes)
-        else:
-            return LeafNode(f"h{count}", block[pos+1:])
+
+        html_nodes = text_node_list_to_html_node_list(node_list)
+        return ParentNode(f"h{count}", html_nodes)
+        #if len(node_list) > 1:
+        #    html_nodes = text_node_list_to_html_node_list(node_list)
+        #    return ParentNode(f"h{count}", html_nodes)
+        #else:
+        #    return LeafNode(f"h{count}", block[pos+1:])
     return None
 def parse_code(block):
     if block.startswith("```") and block.endswith("```"):
@@ -189,11 +193,14 @@ def parse_ul(block):
     for line in split_block:
         if line.startswith("-") or line.startswith("*"):
             node_list = text_to_textnodes(line[2:])
-            if len(node_list) > 1:
-                html_nodes = text_node_list_to_html_node_list(node_list)
-                children.append(ParentNode("li", html_nodes))
-            else:
-                children.append(LeafNode("li", line[2:]))
+                
+            html_nodes = text_node_list_to_html_node_list(node_list)
+            children.append(ParentNode("li", html_nodes))
+            #if len(node_list) > 1:
+            #    html_nodes = text_node_list_to_html_node_list(node_list)
+            #    children.append(ParentNode("li", html_nodes))
+            #else:
+            #    children.append(LeafNode("li", line[2:]))
     return ParentNode("ul", children) 
 def parse_ol(block):
     children = []
@@ -201,23 +208,27 @@ def parse_ol(block):
     start_pos = split_block[0].find(".")
     start = split_block[0][:start_pos]
     text = split_block[0][start_pos+1:].lstrip()
-    children.append(LeafNode("li", text))
+    node_list = text_to_textnodes(text)
+    html_nodes = text_node_list_to_html_node_list(node_list)
+    #print("\n\n", text, node_list, "\n\n", html_nodes, "\n\n")
+    children.append(ParentNode("li", html_nodes))
     for line in split_block[1:]:
         line_pos = line.find(".")
         text = line[line_pos+1:].lstrip()
         node_list = text_to_textnodes(text)
-        if len(node_list) > 1:
-            html_nodes = text_node_list_to_html_node_list(node_list)
-            children.append(ParentNode("li", html_nodes))
-        else:
-            children.append(LeafNode("li", text))
+
+        html_nodes = text_node_list_to_html_node_list(node_list)
+        children.append(ParentNode("li", html_nodes))
+        #if len(node_list) > 1:
+        #    html_nodes = text_node_list_to_html_node_list(node_list)
+        #    children.append(ParentNode("li", html_nodes))
+        #else:
+        #    children.append(LeafNode("li", text))
     return ParentNode("ol", children, props={"start": start})
 def parse_paragraph(block):
     node_list = text_to_textnodes(block)
-    if len(node_list) > 1:
-        html_nodes = text_node_list_to_html_node_list(node_list)
-        return ParentNode("p", html_nodes)
-    return LeafNode("p", block)
+    html_nodes = text_node_list_to_html_node_list(node_list)
+    return ParentNode("p", html_nodes)
 def text_node_list_to_html_node_list(textnode_list):
     html_node_list = []
     for node in textnode_list:

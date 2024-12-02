@@ -45,6 +45,11 @@ class TestMDParser(unittest.TestCase):
     def test_none_text(self):
         node = TextNode(None, TextType.TEXT)
         self.assertRaises(Exception, split_nodes_delimiter, [node], "`", TextType.CODE)
+    def test_four_delimiters(self):
+        node = TextNode("This is text with a `code block` `word`", TextType.TEXT)
+        new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+        self.assertEqual(new_nodes, [TextNode("This is text with a ", TextType.TEXT), TextNode("code block", TextType.CODE), TextNode(" ", TextType.TEXT), TextNode("word", TextType.CODE)])
+
 
     def test_multiple_nodes(self):
         node_one = TextNode("Node one with a `code block` word", TextType.TEXT)
@@ -244,7 +249,8 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
         self.assertEqual(LeafNode("h1", "Big Heading"), parse_heading(md_block))
     def test_parse_heading(self):
         md_block = "###### Small Heading"
-        self.assertEqual(LeafNode("h6", "Small Heading"), parse_heading(md_block))
+        heading = ParentNode("h6", [LeafNode(None, "Small Heading")])
+        self.assertEqual(heading, parse_heading(md_block))
     def test_parse_code(self):
         md_block = "```print()```"
         node = LeafNode("code", "print()")
@@ -256,12 +262,12 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
         self.assertEqual(node, parse_quote(md_block))
     def test_parse_ul(self):
         md_block = '- Eggs\n- Milk\n- Flour'
-        children = [LeafNode("li", "Eggs"), LeafNode("li", "Milk"), LeafNode("li", "Flour")]
+        children = [ParentNode("li", [LeafNode(None, "Eggs")]), ParentNode("li", [LeafNode(None, "Milk")]), ParentNode("li", [LeafNode(None, "Flour")])]
         node = ParentNode("ul", children) 
         self.assertEqual(node, parse_ul(md_block))
     def test_parse_ol(self):
         md_block = '2. Eggs\n3. Milk\n4. Flour'
-        children = [LeafNode("li", "Eggs"), LeafNode("li", "Milk"), LeafNode("li", "Flour")]
+        children = [ParentNode("li", [LeafNode(None, "Eggs")]), ParentNode("li", [LeafNode(None, "Milk")]), ParentNode("li", [LeafNode(None, "Flour")])]
         node = ParentNode("ol", children, props={"start":"2"}) 
         self.assertEqual(node, parse_ol(md_block))
     def test_parse_md_to_html_nodes(self):
@@ -279,26 +285,26 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
         markdown += '\n\n'
         markdown += 'The quick brown fox jumps over the lazy dog. My favorite food is chicken.'
         node = ParentNode("div", [
-            LeafNode("h1", "Big Heading"),
+            ParentNode("h1", [LeafNode(None, "Big Heading")]),
             LeafNode("code", 'print("What is the answer to the universe")\nprint(42)'),
             LeafNode("blockquote", 'The best time to plant a tree was 20 years ago.\nThe second best time is now.'),
             ParentNode("ul", [
-                LeafNode("li", "Eggs"),
-                LeafNode("li", "Milk"),
-                LeafNode("li", "Flour"),
+                ParentNode("li", [LeafNode(None, "Eggs")]),
+                ParentNode("li", [LeafNode(None, "Milk")]),
+                ParentNode("li", [LeafNode(None, "Flour")]),
             ]),
             ParentNode("ul", [
-                LeafNode("li", "Eggs"),
-                LeafNode("li", "Milk"),
-                LeafNode("li", "Flour"),
+                ParentNode("li", [LeafNode(None, "Eggs")]),
+                ParentNode("li", [LeafNode(None, "Milk")]),
+                ParentNode("li", [LeafNode(None, "Flour")]),
             ]),
             ParentNode("ol", [
-                LeafNode("li", "Eggs"),
-                LeafNode("li", "Milk"),
-                LeafNode("li", "Flour"),
+                ParentNode("li", [LeafNode(None, "Eggs")]),
+                ParentNode("li", [LeafNode(None, "Milk")]),
+                ParentNode("li", [LeafNode(None, "Flour")]),
                 ], props={"start": "1"}
             ),
-            LeafNode("p", "The quick brown fox jumps over the lazy dog. My favorite food is chicken."),
+            ParentNode("p", [LeafNode(None, "The quick brown fox jumps over the lazy dog. My favorite food is chicken.")]),
         ])
         self.assertEqual(node, markdown_to_html_node(markdown))
 
