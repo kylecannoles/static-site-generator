@@ -6,7 +6,7 @@ from mdparser import markdown_to_html_node, extract_title
 
 def main():
     copy_static_to_public()
-    generate_page()
+    generate_pages_recursive()
 
 def copy_files(src,dest, file_list):
     for file in file_list:
@@ -37,7 +37,6 @@ def generate_page(from_path="content/index.md", template_path="template.html", d
     template_file = f.read()
     # Convert markdown to html_node 
     html_node = markdown_to_html_node(md_file)
-    print(html_node)
     # Get page title
     page_title = extract_title(md_file)
     # Replace template variables
@@ -48,5 +47,16 @@ def generate_page(from_path="content/index.md", template_path="template.html", d
     # Write to file
     f = open(dest_path, "w")
     f.write(html_file)
+
+def generate_pages_recursive(dir_path_content="content", template_path="template.html", dest_dir_path="public"):
+    current_dir_files = listdir(dir_path_content)
+    for file in current_dir_files:
+        file_path = path.join(dir_path_content, file)
+        if path.isfile(file_path):
+            f_name, f_ext = path.splitext(file)
+            generate_page(file_path, template_path, path.join(dest_dir_path, f_name + ".html"))
+        else:
+            makedirs(file_path, exist_ok=True)
+            generate_pages_recursive(file_path, template_path, path.join(dest_dir_path,file))
 
 main()
